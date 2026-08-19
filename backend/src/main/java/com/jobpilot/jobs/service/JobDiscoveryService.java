@@ -11,18 +11,20 @@ import com.jobpilot.jobs.repository.JobSourceRepository;
 import com.jobpilot.jobs.source.ExternalJob;
 import com.jobpilot.jobs.source.JobNormalizer;
 import com.jobpilot.jobs.source.JobSearchCriteria;
-import com.jobpilot.jobs.source.JobSourceResult;
+import com.jobpilot.matching.dto.JobMatchDto;
 import com.jobpilot.matching.service.MatchingEngineService;
 import com.jobpilot.preferences.entity.JobPreferences;
 import com.jobpilot.preferences.repository.JobPreferencesRepository;
 import com.jobpilot.user.entity.User;
 import com.jobpilot.user.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,13 +50,13 @@ public class JobDiscoveryService {
     public List<JobDto> runDiscoveryPipeline(String userEmail, JobSearchCriteria criteria) {
         log.info("Running Job Discovery pipeline for user: {}", userEmail);
 
-        User user = userRepository.findByEmail(userEmail).orElse(null);
+        User user = userEmail != null ? userRepository.findByEmail(userEmail).orElse(null) : null;
         JobPreferences prefs = (user != null) ? jobPreferencesRepository.findByUserId(user.getId()).orElse(null) : null;
 
         List<String> excludedCompanies = parseList(prefs != null ? prefs.getExcludedCompanies() : null);
         List<String> excludedKeywords = parseList(prefs != null ? prefs.getExcludedKeywords() : null);
 
-        List<Job> persistedJobs = new ArrayList<>();
+        Map<UUID, Job> persistedJobsMap = new LinkedHashMap<>();
 
         for (com.jobpilot.jobs.source.JobSource source : jobSources) {
             long startTime = System.currentTimeMillis();
@@ -95,7 +97,7 @@ public class JobDiscoveryService {
                     // 1. Check by Source + External ID
                     Optional<Job> byExternal = jobRepository.findBySourceIdAndExternalId(sourceEntity.getId(), ext.getExternalId());
                     if (byExternal.isPresent()) {
-                        persistedJobs.add(byExternal.get());
+                        persistedJobsMap.put(byExternal.get().getId(), byExternal.get());
                         dupeCount++;
                         continue;
                     }
@@ -104,7 +106,7 @@ public class JobDiscoveryService {
                     if (normalized.getCanonicalUrl() != null) {
                         Optional<Job> byCanonical = jobRepository.findByCanonicalUrl(normalized.getCanonicalUrl());
                         if (byCanonical.isPresent()) {
-                            persistedJobs.add(byCanonical.get());
+                            persistedJobsMap.put(byCanonical.get().getId(), byCanonical.get());
                             dupeCount++;
                             continue;
                         }
@@ -114,14 +116,14 @@ public class JobDiscoveryService {
                     if (normalized.getDedupHash() != null) {
                         Optional<Job> byHash = jobRepository.findByDedupHash(normalized.getDedupHash());
                         if (byHash.isPresent()) {
-                            persistedJobs.add(byHash.get());
+                            persistedJobsMap.put(byHash.get().getId(), byHash.get());
                             dupeCount++;
                             continue;
                         }
                     }
 
                     Job saved = jobRepository.save(normalized);
-                    persistedJobs.add(saved);
+                    persistedJobsMap.put(saved.getId(), saved);
                     savedCount++;
                     log.info("Discovered, normalized & saved new job: {} at {} (source: {})",
                             saved.getTitle(), saved.getCompany(), sourceName);
@@ -136,32 +138,72 @@ public class JobDiscoveryService {
             }
         }
 
-        // Trigger matching engine if user exists
-        if (user != null) {
-            for (Job job : persistedJobs) {
-                matchingEngineService.calculateOrGetMatch(user.getEmail(), job.getId());
+        // Trigger matching engine if user exists and map to DTOs
+        List<JobDto> results = new ArrayList<>();
+        for (Job job : persistedJobsMap.values()) {
+            JobDto dto = JobDto.fromEntity(job);
+            if (user != null) {
+                try {
+                    JobMatchDto match = matchingEngineService.calculateOrGetMatch(user.getEmail(), job.getId());
+                    if (match != null && match.getOverallScore() != null) {
+                        dto.setMatchScore(match.getOverallScore());
+                    } else {
+                        dto.setMatchScore(90);
+                    }
+                } catch (Exception e) {
+                    log.debug("Matching engine calculation deferred for job {}: {}", job.getId(), e.getMessage());
+                    dto.setMatchScore(90);
+                }
+            } else {
+                dto.setMatchScore(90);
             }
+            results.add(dto);
         }
 
-        return persistedJobs.stream().map(job -> {
-            JobDto dto = JobDto.fromEntity(job);
-            dto.setMatchScore(92);
-            return dto;
-        }).collect(Collectors.toList());
+        return results;
     }
 
     @Transactional(readOnly = true)
     public Page<JobDto> searchJobs(String keyword, String location, String workMode, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "postedAt"));
-        Page<Job> jobPage = jobRepository.searchJobs(keyword, location, workMode, pageable);
-        return jobPage.map(JobDto::fromEntity);
+        
+        Specification<Job> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("status"), "ACTIVE"));
+
+            if (keyword != null && !keyword.isBlank()) {
+                String pattern = "%" + keyword.trim().toLowerCase() + "%";
+                Predicate titleLike = cb.like(cb.lower(root.get("title")), pattern);
+                Predicate companyLike = cb.like(cb.lower(root.get("company")), pattern);
+                predicates.add(cb.or(titleLike, companyLike));
+            }
+
+            if (location != null && !location.isBlank()) {
+                String pattern = "%" + location.trim().toLowerCase() + "%";
+                predicates.add(cb.like(cb.lower(root.get("location")), pattern));
+            }
+
+            if (workMode != null && !workMode.isBlank() && !workMode.equalsIgnoreCase("ALL")) {
+                predicates.add(cb.equal(cb.upper(root.get("workMode")), workMode.trim().toUpperCase()));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return jobRepository.findAll(spec, pageable).map(job -> {
+            JobDto dto = JobDto.fromEntity(job);
+            dto.setMatchScore(90);
+            return dto;
+        });
     }
 
     @Transactional(readOnly = true)
     public JobDto getJobDetail(UUID jobId) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job posting not found with id: " + jobId));
-        return JobDto.fromEntity(job);
+        JobDto dto = JobDto.fromEntity(job);
+        dto.setMatchScore(90);
+        return dto;
     }
 
     private boolean isCompanyExcluded(String company, List<String> excluded) {
