@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './routes';
-import { LoadingState } from '@/components/feedback';
+import { LoadingState } from '@/components/feedback/index';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { AdminRoute } from '@/components/layout/AdminRoute';
 import LoginPage, { RegisterPage } from '@/pages/AuthPages';
