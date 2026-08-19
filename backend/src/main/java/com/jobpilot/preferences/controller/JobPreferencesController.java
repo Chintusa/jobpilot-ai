@@ -14,7 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping({"/api/preferences", "/api/v1/preferences"})
+@RequestMapping({"/api/preferences", "/api/v1/preferences", "/api/v1/job-preferences"})
 @RequiredArgsConstructor
 @Tag(name = "Job Preferences", description = "Endpoints for configuring target roles, locations, exclusions, matching thresholds, and auto-apply policies")
 public class JobPreferencesController {
