@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, AlertCircle, Loader2 } from 'lucide-react';
+import { Zap, AlertCircle, Loader2, Sparkles, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ROUTES } from '@/routes/routes';
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const location = useLocation();
   const { login, isLoading, error, clearError } = useAuthStore();
 
-  const [email, setEmail] = useState('test.engineer@example.com');
+  const [email, setEmail] = useState('jhasaketan@example.com');
   const [password, setPassword] = useState('Password123');
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center shadow-lg shadow-blue-500/20">
             <Zap size={18} className="text-white" />
           </div>
           <span className="text-2xl font-bold text-[#F1F5F9]">
@@ -53,18 +53,18 @@ export default function LoginPage() {
         {/* Card */}
         <div className="bg-[#1A2235] border border-[rgba(255,255,255,0.08)] rounded-2xl p-8 shadow-[0_24px_64px_rgba(0,0,0,0.5)]">
           <h1 className="text-xl font-bold text-[#F1F5F9] mb-1">Welcome back</h1>
-          <p className="text-sm text-[#64748B] mb-6">Sign in to your account</p>
+          <p className="text-sm text-[#64748B] mb-6">Sign in to your AI Job Search cockpit</p>
 
           {(formError || error) && (
-            <div className="mb-4 p-3 bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] rounded-lg flex items-center gap-2 text-xs text-[#EF4444]">
-              <AlertCircle size={14} className="shrink-0" />
+            <div className="mb-4 p-3 bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] rounded-lg flex items-start gap-2 text-xs text-[#EF4444]">
+              <AlertCircle size={15} className="shrink-0 mt-0.5" />
               <span>{formError || error}</span>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
               placeholder="you@example.com"
               value={email}
@@ -79,9 +79,16 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <div className="flex justify-end">
-              <button type="button" className="text-xs text-[#3B82F6] hover:underline">
-                Forgot password?
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('jhasaketan@example.com');
+                  setPassword('Password123');
+                }}
+                className="text-xs text-[#3B82F6] hover:underline flex items-center gap-1"
+              >
+                <Sparkles size={12} /> Fill Demo Credentials
               </button>
             </div>
             <Button type="submit" variant="primary" size="lg" fullWidth disabled={isLoading}>
@@ -101,7 +108,7 @@ export default function LoginPage() {
               onClick={() => navigate(ROUTES.REGISTER)}
               className="text-[#3B82F6] hover:underline font-medium"
             >
-              Sign up
+              Create one now
             </button>
           </p>
         </div>
@@ -114,10 +121,10 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const { register, isLoading, error, clearError } = useAuthStore();
 
-  const [name, setName] = useState('Jhasaketan M.');
-  const [email, setEmail] = useState('jhasaketan@example.com');
-  const [password, setPassword] = useState('Password123');
-  const [phone, setPhone] = useState('+91 9876543210');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -126,11 +133,16 @@ export function RegisterPage() {
     clearError();
 
     if (!name || !email || !password) {
-      setFormError('Please fill in all required fields');
+      setFormError('Please fill in name, email, and password');
       return;
     }
 
-    const success = await register(name, email, password, phone);
+    if (password.length < 6) {
+      setFormError('Password must be at least 6 characters');
+      return;
+    }
+
+    const success = await register(name, email, password, phone || undefined);
     if (success) {
       navigate(ROUTES.DASHBOARD, { replace: true });
     }
@@ -145,7 +157,7 @@ export function RegisterPage() {
     >
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center shadow-lg shadow-blue-500/20">
             <Zap size={18} className="text-white" />
           </div>
           <span className="text-2xl font-bold text-[#F1F5F9]">
@@ -158,8 +170,8 @@ export function RegisterPage() {
           <p className="text-sm text-[#64748B] mb-6">Start your AI job search journey</p>
 
           {(formError || error) && (
-            <div className="mb-4 p-3 bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] rounded-lg flex items-center gap-2 text-xs text-[#EF4444]">
-              <AlertCircle size={14} className="shrink-0" />
+            <div className="mb-4 p-3 bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] rounded-lg flex items-start gap-2 text-xs text-[#EF4444]">
+              <AlertCircle size={15} className="shrink-0 mt-0.5" />
               <span>{formError || error}</span>
             </div>
           )}
@@ -167,13 +179,13 @@ export function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-4">
             <Input
               label="Full Name"
-              placeholder="Jhasaketan M."
+              placeholder="e.g. Jhasaketan M."
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
               placeholder="you@example.com"
               value={email}
@@ -181,16 +193,16 @@ export function RegisterPage() {
               required
             />
             <Input
-              label="Phone Number"
+              label="Phone Number (optional)"
               type="tel"
               placeholder="+91 9876543210"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
             <Input
-              label="Password"
+              label="Password (min 6 chars)"
               type="password"
-              placeholder="Min. 8 characters"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
