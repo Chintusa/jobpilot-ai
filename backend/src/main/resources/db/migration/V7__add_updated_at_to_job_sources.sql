@@ -1,0 +1,2 @@
+-- V7: Add updated_at to job_sources
+ALTER TABLE job_sources ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;

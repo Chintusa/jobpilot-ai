@@ -1,0 +1,237 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   JobPilot AI — Design Tokens (CSS Custom Properties)
+   Source of truth: /docs/DESIGN_SYSTEM.md
+   ============================================================ */
+
+@theme {
+  /* Brand Colors */
+  --color-brand-primary: #2563EB;
+  --color-brand-secondary: #7C3AED;
+  --color-brand-active: #06B6D4;
+  --color-brand-silver: #94A3B8;
+  --color-brand-tertiary: #64748B;
+
+  /* Background Scale */
+  --color-bg-root: #0A0F1E;
+  --color-bg-sidebar: #0D1526;
+  --color-bg-surface: #111827;
+  --color-bg-card: #1A2235;
+  --color-bg-card-hover: #1E2A42;
+  --color-bg-elevated: #243047;
+  --color-bg-input: #1E293B;
+
+  /* Text Scale */
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-text-inverse: #0A0F1E;
+
+  /* Semantic Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #06B6D4;
+
+  /* AI Colors */
+  --color-ai-glow-blue: #3B82F6;
+  --color-ai-glow-purple: #8B5CF6;
+  --color-ai-glow-cyan: #22D3EE;
+  --color-ai-active: #10B981;
+  --color-match-strong: #10B981;
+  --color-match-good: #3B82F6;
+  --color-match-weak: #F59E0B;
+
+  /* Border Colors */
+  --color-border-subtle: rgba(148, 163, 184, 0.08);
+  --color-border-default: rgba(148, 163, 184, 0.15);
+  --color-border-strong: rgba(148, 163, 184, 0.30);
+  --color-border-brand: rgba(37, 99, 235, 0.50);
+  --color-border-glass: rgba(255, 255, 255, 0.06);
+
+  /* Font */
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Spacing */
+  --spacing-sidebar-width: 240px;
+  --spacing-sidebar-collapsed: 64px;
+  --spacing-topnav-height: 64px;
+
+  /* Animations */
+  --animate-ai-pulse: ai-pulse 2s ease-in-out infinite;
+  --animate-orbit: orbit 8s linear infinite;
+  --animate-status-pulse: status-pulse 2s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.25s ease-in-out;
+  --animate-slide-in-left: slide-in-left 0.3s ease-out;
+  --animate-slide-in-right: slide-in-right 0.28s ease-out;
+  --animate-slide-in-up: slide-in-up 0.25s ease-out;
+
+  @keyframes ai-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes orbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes status-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.4; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-in-left {
+    from { transform: translateX(-16px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes slide-in-up {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes count-up {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* ============================================================
+   Global Base Styles
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-root);
+  color: var(--color-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-card);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.35);
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   Utility classes not covered by Tailwind
+   ============================================================ */
+
+.gradient-brand {
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+}
+
+.gradient-glass {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px);
+}
+
+.glow-blue {
+  box-shadow: 0 0 24px rgba(37, 99, 235, 0.35), 0 0 48px rgba(37, 99, 235, 0.15);
+}
+
+.glow-green {
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+}
+
+.glow-purple {
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.35), 0 0 48px rgba(139, 92, 246, 0.15);
+}
+
+.text-gradient-brand {
+  background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-bg {
+  background: var(--color-bg-surface);
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(37,99,235,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.04) 0%, transparent 60%);
+  min-height: 100vh;
+}
+
+/* AI Orb styles */
+.ai-orb-core {
+  background: radial-gradient(ellipse at center,
+    rgba(59,130,246,0.9) 0%,
+    rgba(139,92,246,0.7) 40%,
+    rgba(22,211,238,0.4) 70%,
+    transparent 100%);
+  border-radius: 50%;
+}
+
+.ai-orb-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  animation: orbit var(--orbit-duration, 8s) linear infinite;
+}
+
+/* Transitions */
+.transition-standard {
+  transition: all 0.2s ease-out;
+}
+
+/* Status badge base */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
